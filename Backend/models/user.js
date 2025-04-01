@@ -12,7 +12,15 @@ const userSchema = new mongoose.Schema({
   points: { type: Number, default: 7 },
   completedProfile: { type: Boolean, default: false },
   skills: [String],
-  interests: [String]
+  interests: [String],
+  // Additional fields
+  profilePicture: { type: String }, // URL to profile picture
+  bio: { type: String }, // Short biography
+  socialLinks: { // Social media links
+    linkedin: { type: String },
+    github: { type: String },
+    twitter: { type: String }
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

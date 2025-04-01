@@ -37,7 +37,7 @@ const SideNavbar = () => {
           <FaComments className="nav-icon" />
           <span>Messages</span>
         </div>
-        <div className="nav-item" onClick={() => navigate('/volunteer-opportunities')}>
+        <div className="nav-item" onClick={() => navigate('/volunteer')}>
           <FaHandsHelping className="nav-icon" />
           <span>Volunteering</span>
         </div>

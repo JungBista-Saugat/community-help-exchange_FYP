@@ -39,7 +39,6 @@ const createHelpRequest = async (req, res) => {
   }
 };
 
-// Get all help requests
 const getHelpRequests = async (req, res) => {
   try {
     const requests = await HelpRequest.find()
@@ -47,18 +46,8 @@ const getHelpRequests = async (req, res) => {
       .populate('assignedTo', 'name');
     res.json(requests);
   } catch (err) {
-    console.error('Error creating help request:', err);
-    
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Validation Error',
-        errors: Object.values(err.errors).map(e => e.message) 
-      });
-    }
-    
-    res.status(500).json({ 
-      message: err.message || 'Server error occurred'
-    });
+    console.error('Error fetching help requests:', err);
+    res.status(500).json({ message: err.message || 'Server error occurred' });
   }
 };
 
@@ -175,4 +164,23 @@ const updateRequestStatus = async (req, res) => {
   }
 };
 
-module.exports = { createHelpRequest, getHelpRequests, getHelpRequestById, updateHelpRequest, deleteHelpRequest, updateRequestStatus };
+const offerHelp = async (req, res) => {
+  try {
+    const helpRequest = await HelpRequest.findById(req.params.id);
+
+    if (!helpRequest) {
+      return res.status(404).json({ message: 'Help request not found' });
+    }
+
+    helpRequest.assignedTo = req.user.id;
+    helpRequest.status = 'assigned';
+    await helpRequest.save();
+
+    res.json(helpRequest);
+  } catch (err) {
+    console.error('Error offering help:', err);
+    res.status(500).json({ message: err.message || 'Server error occurred' });
+  }
+};
+
+module.exports = { createHelpRequest, getHelpRequests, getHelpRequestById, updateHelpRequest, deleteHelpRequest, updateRequestStatus, offerHelp };

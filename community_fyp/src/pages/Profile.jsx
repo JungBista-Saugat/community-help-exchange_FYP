@@ -1,21 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import '../styles/common.css';
 import Layout from '../components/Layout';
 
 const Profile = () => {
-  const [profile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    joinDate: 'January 2023',
-    stats: {
-      helpProvided: 15,
-      helpReceived: 8,
-      volunteerHours: 24,
-      points: 150
-    },
-    badges: ['Helper Star', 'Quick Responder', 'Community Champion'],
-    skills: ['Mathematics', 'Computer Science', 'Physics']
-  });
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/users/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setProfile(response.data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setError('Failed to fetch profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
 
   return (
     <Layout>
@@ -24,35 +44,22 @@ const Profile = () => {
           <div className="help-card-header">
             <h1 className="page-title">{profile.name}</h1>
             <p>{profile.email}</p>
-            <p>Member since {profile.joinDate}</p>
+            <p>Member since {new Date(profile.createdAt).toLocaleDateString()}</p>
           </div>
 
           <div className="content-wrapper">
             <div className="help-grid">
               <div className="help-card">
-                <h3 className="help-card-title">{profile.stats.helpProvided}</h3>
-                <p className="help-card-description">Help Provided</p>
-              </div>
-              <div className="help-card">
-                <h3 className="help-card-title">{profile.stats.helpReceived}</h3>
-                <p className="help-card-description">Help Received</p>
-              </div>
-              <div className="help-card">
-                <h3 className="help-card-title">{profile.stats.volunteerHours}</h3>
-                <p className="help-card-description">Volunteer Hours</p>
-              </div>
-              <div className="help-card">
-                <h3 className="help-card-title">{profile.stats.points}</h3>
+                <h3 className="help-card-title">{profile.points}</h3>
                 <p className="help-card-description">Points Earned</p>
               </div>
-            </div>
-
-            <div className="form-group">
-              <h2 className="page-title">Badges</h2>
-              <div className="tag-container">
-                {profile.badges.map((badge, index) => (
-                  <span className="tag" key={index}>{badge}</span>
-                ))}
+              <div className="help-card">
+                <h3 className="help-card-title">{profile.skills.length}</h3>
+                <p className="help-card-description">Skills</p>
+              </div>
+              <div className="help-card">
+                <h3 className="help-card-title">{profile.interests.length}</h3>
+                <p className="help-card-description">Interests</p>
               </div>
             </div>
 
@@ -61,6 +68,15 @@ const Profile = () => {
               <div className="tag-container">
                 {profile.skills.map((skill, index) => (
                   <span className="tag" key={index}>{skill}</span>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <h2 className="page-title">Interests</h2>
+              <div className="tag-container">
+                {profile.interests.map((interest, index) => (
+                  <span className="tag" key={index}>{interest}</span>
                 ))}
               </div>
             </div>

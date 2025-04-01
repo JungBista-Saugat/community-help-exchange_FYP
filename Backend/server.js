@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require('./routes/adminRoutes');
 const helpRequestRoutes = require('./routes/helpRequestRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
+const mongoose = require('mongoose');
 
 dotenv.config();
 connectDB(); // Connect to MongoDB

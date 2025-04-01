@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
-import '../styles/dashboard.css';
+import AdminNavbar from './AdminNavbar'; 
+import UpdateHelpRequest from '../UpdateHelpRequest';
+import '../../styles/admin.css';
 
 const VolunteerOpportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [applyingId, setApplyingId] = useState(null);
+  const [editingOpportunity, setEditingOpportunity] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,11 +20,9 @@ const VolunteerOpportunities = () => {
           navigate('/login');
           return;
         }
-
-        const response = await axios.get('http://localhost:5000/api/volunteer-posts', {
+        const response = await axios.get('http://localhost:5000/api/help-requests', {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         setOpportunities(response.data);
       } catch (err) {
         setError('Failed to load volunteer opportunities');
@@ -36,31 +35,32 @@ const VolunteerOpportunities = () => {
     fetchOpportunities();
   }, [navigate]);
 
-  const handleApply = async (opportunityId) => {
+  const handleUpdate = async (opportunityId, updatedData) => {
     try {
-      setApplyingId(opportunityId);
       const token = localStorage.getItem('token');
-      
-      await axios.post(`http://localhost:5000/api/volunteer-posts/${opportunityId}/apply`, {}, {
+      const response = await axios.put(
+        `http://localhost:5000/api/help-requests/${opportunityId}`,
+        updatedData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOpportunities(opportunities.map(opp => opp._id === opportunityId ? response.data : opp));
+      setEditingOpportunity(null);
+    } catch (err) {
+      setError('Failed to update the opportunity');
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (opportunityId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5000/api/help-requests/${opportunityId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      // Update the local state to reflect the application
-      setOpportunities(opportunities.map(opp => {
-        if (opp._id === opportunityId) {
-          return {
-            ...opp,
-            hasApplied: true
-          };
-        }
-        return opp;
-      }));
-
-      setApplyingId(null);
+      setOpportunities(opportunities.filter(opp => opp._id !== opportunityId));
     } catch (err) {
-      setError('Failed to apply for this opportunity');
+      setError('Failed to delete the opportunity');
       console.error(err);
-      setApplyingId(null);
     }
   };
 
@@ -70,7 +70,8 @@ const VolunteerOpportunities = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <AdminNavbar />
       <div className="page-container">
         <h1>Volunteer Opportunities</h1>
         {error && <p className="error-message">{error}</p>}
@@ -86,10 +87,10 @@ const VolunteerOpportunities = () => {
                 <h3>{opportunity.title}</h3>
                 <p className="opportunity-description">{opportunity.description}</p>
                 <div className="opportunity-details">
-                  <p><strong>Location:</strong> {opportunity.location}</p>
-                  <p><strong>Date:</strong> {formatDate(opportunity.date)}</p>
-                  <p><strong>Points:</strong> {opportunity.pointsAwarded}</p>
-                  {opportunity.requiredSkills.length > 0 && (
+                  <p><strong>Category:</strong> {opportunity.category}</p>
+                  <p><strong>Emergency Level:</strong> {opportunity.emergencyLevel}</p>
+                  <p><strong>Points Deducted:</strong> {opportunity.pointsDeducted}</p>
+                  {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
                     <div>
                       <strong>Required Skills:</strong>
                       <ul className="skills-list">
@@ -101,26 +102,31 @@ const VolunteerOpportunities = () => {
                   )}
                 </div>
                 <div className="opportunity-actions">
-                  {opportunity.hasApplied ? (
-                    <button className="applied-button" disabled>Applied</button>
-                  ) : opportunity.status === 'closed' ? (
-                    <button className="closed-button" disabled>Closed</button>
-                  ) : (
-                    <button 
-                      className="apply-button" 
-                      onClick={() => handleApply(opportunity._id)}
-                      disabled={applyingId === opportunity._id}
-                    >
-                      {applyingId === opportunity._id ? 'Applying...' : 'Apply'}
-                    </button>
-                  )}
+                  <button 
+                    className="update-button" 
+                    onClick={() => setEditingOpportunity(opportunity)}
+                  >
+                    Update
+                  </button>
+                  <button 
+                    className="delete-button" 
+                    onClick={() => handleDelete(opportunity._id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
+        {editingOpportunity && (
+          <UpdateHelpRequest 
+            opportunity={editingOpportunity} 
+            onUpdate={(updatedOpportunity) => handleUpdate(editingOpportunity._id, updatedOpportunity)} 
+          />
+        )}
       </div>
-    </Layout>
+    </>
   );
 };
 

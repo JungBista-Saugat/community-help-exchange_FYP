@@ -8,7 +8,8 @@ const AskHelp = () => {
     title: '',
     description: '',
     category: '',
-    urgency: 'medium'
+    emergencyLevel: 'medium', // Ensure this field matches the schema
+    pointsDeducted: 1 // Ensure this field is included
   });
 
   const handleSubmit = async (e) => {
@@ -28,7 +29,8 @@ const AskHelp = () => {
           title: '',
           description: '',
           category: '',
-          urgency: 'medium'
+          emergencyLevel: 'medium',
+          pointsDeducted: 1
         });
       }
     } catch (error) {
@@ -101,13 +103,13 @@ const AskHelp = () => {
                 <div className="form-group half-width">
                   <label className="form-label">Urgency</label>
                   <div className="urgency-options">
-                    {['Low', 'Medium', 'High'].map((level) => (
+                    {['Low', 'Medium', 'High', 'Critical'].map((level) => (
                       <label key={level} className="urgency-option">
                         <input
                           type="radio"
-                          name="urgency"
+                          name="emergencyLevel"
                           value={level.toLowerCase()}
-                          checked={formData.urgency === level.toLowerCase()}
+                          checked={formData.emergencyLevel === level.toLowerCase()}
                           onChange={handleChange}
                         />
                         <span className={`urgency-label urgency-${level.toLowerCase()}`}>{level}</span>
@@ -115,6 +117,20 @@ const AskHelp = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="pointsDeducted">Points Deducted</label>
+                <input
+                  type="number"
+                  id="pointsDeducted"
+                  name="pointsDeducted"
+                  className="form-input"
+                  value={formData.pointsDeducted}
+                  onChange={handleChange}
+                  min="1"
+                  required
+                />
               </div>
 
               <button type="submit" className="btn btn-primary submit-btn">

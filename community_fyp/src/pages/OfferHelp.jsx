@@ -26,8 +26,27 @@ const OfferHelp = () => {
   }, []);
 
   const handleOfferHelp = async (requestId) => {
-    // TODO: Implement help offer logic
-    console.log('Offered help for request:', requestId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`http://localhost:5000/api/help-requests/${requestId}/offer-help`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Update the local state to reflect the offered help
+      setHelpRequests(helpRequests.map(request => {
+        if (request._id === requestId) {
+          return response.data;
+        }
+        return request;
+      }));
+
+      alert('Help offered successfully!');
+    } catch (error) {
+      console.error('Error offering help:', error);
+      alert(error.response?.data?.message || 'Failed to offer help');
+    }
   };
 
   return (
@@ -44,13 +63,15 @@ const OfferHelp = () => {
                     <span className={`tag tag-${request.category.toLowerCase()}`}>
                       {request.category}
                     </span>
-                    <span className={`tag tag-${request.urgency}`}>
-                      {request.urgency.charAt(0).toUpperCase() + request.urgency.slice(1)}
+                    <span className={`tag tag-${request.emergencyLevel}`}>
+                      {request.emergencyLevel.charAt(0).toUpperCase() + request.emergencyLevel.slice(1)}
                     </span>
                   </div>
                 </div>
                 <p className="help-card-description">{request.description}</p>
-                <p className="help-card-user">Posted by: {request.requestedBy.name}</p>
+                <p className="help-card-user">
+                  Posted by: {request.requestedBy ? request.requestedBy.name : 'Unknown'}
+                </p>
                 <button 
                   className="btn btn-primary help-card-button" 
                   onClick={() => handleOfferHelp(request._id)}

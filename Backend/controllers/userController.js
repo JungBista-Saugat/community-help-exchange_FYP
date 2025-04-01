@@ -1,32 +1,29 @@
+// Importing required modules
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 // User login controller
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
+const loginUsers = async (req, res) => {
   try {
-    // Check if user exists
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res.status(400).json({ message: 'User not found' });
     }
 
-    // Check if password is correct
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.json({ token, user: { ...user._doc, password: undefined } });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -41,35 +38,42 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash the password before saving the user
+    // Hash the password before saving to the database
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ name, email, password: hashedPassword, address, contactNumber, role });
+
+    // Save the new user to the database
     await newUser.save();
+
+    // Send response with the newly created user data
     res.status(201).json(newUser);
   } catch (error) {
+    // Handle any server-side errors
     res.status(400).json({ message: error.message });
   }
 };
 
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-
-// Forgot password controller
+// Forgot password controller (Sends a password reset email)
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
+
   try {
+    // Check if the user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Generate reset token
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpire = Date.now() + 3600000; // Token expires in 1 hour
     await user.save();
 
+    // Construct the reset URL to be sent in the email
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    
+
+    // Configure Nodemailer to send email
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -78,6 +82,7 @@ const forgotPassword = async (req, res) => {
       }
     });
 
+    // Send the email with the reset password link
     await transporter.sendMail({
       to: user.email,
       subject: 'Password Reset Request',
@@ -90,21 +95,23 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// Reset password controller
+// Reset password controller (Handles password change using a reset token)
 const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
   try {
+    // Find user with valid reset token
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordExpire: { $gt: Date.now() }
+      resetPasswordExpire: { $gt: Date.now() } // Check if the token has expired
     });
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired token' });
     }
 
+    // Hash the new password and save it
     user.password = await bcrypt.hash(password, 10);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
@@ -116,8 +123,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Get current user profile
-const getCurrentUser = async (req, res) => {
+const getCurrentUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
@@ -129,7 +135,7 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-// Update user profile
+// Update user profile controller
 const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -137,11 +143,12 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update user fields
+    // Update profile fields with provided data
     if (req.body.skills) user.skills = req.body.skills;
     if (req.body.interests) user.interests = req.body.interests;
     if (req.body.completedProfile !== undefined) user.completedProfile = req.body.completedProfile;
 
+    // Save the updated user data
     await user.save();
     res.json(user);
   } catch (error) {
@@ -149,18 +156,34 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// Token verification controller
-const verifyToken = async (req, res) => {
+// Validate JWT token
+const validateToken = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'No token provided' });
-
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    res.json({ valid: true, user: decoded });
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json(user);
   } catch (error) {
-    res.status(401).json({ valid: false, message: 'Invalid token' });
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
-module.exports = { loginUser, registerUser, forgotPassword, resetPassword, getCurrentUser, updateProfile, verifyToken };
+// Exporting the functions so they can be used in routes
+module.exports = { 
+  loginUser, 
+  registerUser, 
+  forgotPassword, 
+  resetPassword, 
+  getCurrentUserProfile, 
+  updateProfile, 
+  validateToken 
+};

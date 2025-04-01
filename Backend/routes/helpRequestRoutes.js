@@ -1,13 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { createHelpRequest, getHelpRequests, getHelpRequestById, updateHelpRequest, deleteHelpRequest, updateRequestStatus } = require('../controllers/helpRequestController');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const helpRequestController = require('../controllers/helpRequestController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.post('/', authMiddleware, createHelpRequest);
-router.get('/', authMiddleware, getHelpRequests);
-router.get('/:id', authMiddleware, getHelpRequestById);
-router.put('/:id', authMiddleware, updateHelpRequest);
-router.delete('/:id', authMiddleware, deleteHelpRequest);
-router.put('/:id/status', authMiddleware, updateRequestStatus);
+// Create a new help request
+router.post('/', authMiddleware, helpRequestController.createHelpRequest);
+
+// Get all help requests
+router.get('/', authMiddleware, helpRequestController.getHelpRequests);
+
+// Get a single help request by ID
+router.get('/:id', authMiddleware, helpRequestController.getHelpRequestById);
+
+// Update a help request by ID
+router.put('/:id', authMiddleware, helpRequestController.updateHelpRequest);
+
+// Delete a help request by ID
+router.delete('/:id', authMiddleware, helpRequestController.deleteHelpRequest);
+
+// Update request status
+router.patch('/:id/status', authMiddleware, helpRequestController.updateRequestStatus);
+
+// Offer help for a help request
+router.post('/:id/offer-help', authMiddleware, helpRequestController.offerHelp);
 
 module.exports = router;
