@@ -14,9 +14,9 @@ const userSchema = new mongoose.Schema({
   skills: [String],
   interests: [String],
   // Additional fields
-  profilePicture: { type: String }, // URL to profile picture
-  bio: { type: String }, // Short biography
-  socialLinks: { // Social media links
+  profilePicture: { type: String }, 
+  bio: { type: String }, 
+  socialLinks: { 
     linkedin: { type: String },
     github: { type: String },
     twitter: { type: String }

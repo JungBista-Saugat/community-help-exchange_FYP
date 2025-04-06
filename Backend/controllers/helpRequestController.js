@@ -1,5 +1,5 @@
 const HelpRequest = require('../models/helpRequestModel');
-const User = require('../models/user');
+const User = require('../models/userModel');
 
 // Create new help request
 const createHelpRequest = async (req, res) => {

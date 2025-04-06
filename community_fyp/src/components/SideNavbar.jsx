@@ -4,8 +4,7 @@ import {
   FaTachometerAlt, 
   FaHandsHelping, 
   FaComments, 
-  FaUser, 
-  FaCog, 
+  FaUser,  
   FaSignOutAlt 
 } from 'react-icons/fa';
 import '../styles/navbar.css';

@@ -1,5 +1,5 @@
 const VolunteerPost = require('../models/VolunteerPost');
-const User = require('../models/user');
+const User = require('../models/userModel');
 
 const getVolunteerPosts = async (req, res) => {
   try {

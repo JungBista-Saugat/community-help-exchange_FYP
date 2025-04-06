@@ -1,12 +1,12 @@
 // Importing required modules
-const User = require("../models/user");
+const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 // User login controller
-const loginUsers = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -177,7 +177,18 @@ const validateToken = async (req, res) => {
   }
 };
 
+// Get all users controller
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // Exclude passwords
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
+};
+
 // Exporting the functions so they can be used in routes
+
 module.exports = { 
   loginUser, 
   registerUser, 
@@ -185,5 +196,6 @@ module.exports = {
   resetPassword, 
   getCurrentUserProfile, 
   updateProfile, 
-  validateToken 
+  validateToken, 
+  getUsers 
 };

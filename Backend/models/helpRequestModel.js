@@ -17,7 +17,7 @@ const helpRequestSchema = new mongoose.Schema({
   emergencyLevel: {
     type: String,
     required: true,
-    enum: ['critical', 'high', 'medium', 'low'],
+    enum: ['high', 'medium', 'low'], 
     default: 'medium'
   },
   pointsDeducted: {

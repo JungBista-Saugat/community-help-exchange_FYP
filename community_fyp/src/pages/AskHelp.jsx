@@ -103,7 +103,7 @@ const AskHelp = () => {
                 <div className="form-group half-width">
                   <label className="form-label">Urgency</label>
                   <div className="urgency-options">
-                    {['Low', 'Medium', 'High', 'Critical'].map((level) => (
+                    {['Low', 'Medium', 'High'].map((level) => (
                       <label key={level} className="urgency-option">
                         <input
                           type="radio"
