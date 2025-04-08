@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import Volunteering from './pages/Volunteering'; 
 import CreatePost from './pages/admin/CreatePost'; 
 import ManageApplications from './pages/admin/ManageApplication'; 
+import NearbyUsers from './components/NearbyUsers';
 // Protected Route
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -41,6 +42,7 @@ function App() {
           <Route path="/admin/create-post" element={<ProtectedRoute element={<CreatePost />} allowedRoles={['admin']} />} />
           <Route path="/admin/applications" element={<ProtectedRoute element={<ManageApplications />} allowedRoles={['admin']} />} />
           <Route path="/admin/adminDashboard" element={<ProtectedRoute element={<AdminDashboard />} allowedRoles={['admin']} />} />
+          <Route path="/nearby-users" element={<NearbyUsers />} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </div>

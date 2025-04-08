@@ -20,7 +20,22 @@ const userSchema = new mongoose.Schema({
     linkedin: { type: String },
     github: { type: String },
     twitter: { type: String }
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'], // GeoJSON type
+      required: true,
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true,
+      default: [0, 0]
+    }
   }
 }, { timestamps: true });
+
+userSchema.index({ location: '2dsphere' }); // Geospatial index
 
 module.exports = mongoose.model("User", userSchema);

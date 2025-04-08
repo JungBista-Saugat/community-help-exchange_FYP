@@ -6,6 +6,8 @@ import '../styles/login.css';
 const ProfileCompletion = () => {
   const [skills, setSkills] = useState([]);
   const [interests, setInterests] = useState([]);
+  const [bio, setBio] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
   const [newSkill, setNewSkill] = useState('');
   const [newInterest, setNewInterest] = useState('');
   const [error, setError] = useState('');
@@ -13,6 +15,7 @@ const ProfileCompletion = () => {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
+  // Fetch user data on component mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -27,8 +30,8 @@ const ProfileCompletion = () => {
         });
 
         setUserData(response.data);
-        
-        // If profile is already completed, redirect to dashboard
+
+        // Redirect to dashboard if profile is already completed
         if (response.data.completedProfile) {
           navigate('/dashboard');
         }
@@ -70,15 +73,23 @@ const ProfileCompletion = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/users/profile', {
-        skills,
-        interests,
-        completedProfile: true
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.put(
+        'http://localhost:5000/api/users/profile',
+        {
+          skills,
+          interests,
+          bio,
+          profilePicture,
+          completedProfile: true // Mark profile as completed
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
-      navigate('/dashboard');
+      if (response.status === 200) {
+        navigate('/dashboard'); // Redirect to dashboard after successful update
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
       setIsSubmitting(false);
@@ -99,7 +110,7 @@ const ProfileCompletion = () => {
     <div className="auth-container">
       <div className="auth-box profile-completion">
         <h2>Complete Your Profile</h2>
-        <p>Add your skills and interests to help us match you with the right opportunities.</p>
+        <p>Add your skills, interests, bio, and profile picture to complete your profile.</p>
         {error && <p className="error">{error}</p>}
         
         <form onSubmit={handleSubmit}>
@@ -143,6 +154,25 @@ const ProfileCompletion = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="input-section">
+            <h3>Bio</h3>
+            <textarea
+              placeholder="Write a short bio about yourself"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
+          </div>
+
+          <div className="input-section">
+            <h3>Profile Picture</h3>
+            <input
+              type="text"
+              placeholder="Enter the URL of your profile picture"
+              value={profilePicture}
+              onChange={(e) => setProfilePicture(e.target.value)}
+            />
           </div>
 
           <button 

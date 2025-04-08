@@ -23,22 +23,21 @@ const Dashboard = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        setUserData(response.data);
-        
-        // If profile is not completed, redirect to profile completion
-        if (!response.data.completedProfile) {
-          navigate('/profile-completion');
-          return;
-        }
+        console.log('User Data:', response.data); // Debug the user data
 
         // If user is admin, redirect to admin dashboard
         if (response.data.role === 'admin') {
+          console.log('Redirecting to admin dashboard...');
           navigate('/admin-dashboard');
           return;
         }
+
+        
+        // If user is neither admin nor incomplete, stay on the dashboard
+        console.log('Redirecting to dashboard...');
       } catch (err) {
-        setError('Failed to load user data');
-        console.error(err);
+        console.error('Error fetching user data:', err);
+        navigate('/login');
       } finally {
         setLoading(false);
       }
@@ -46,6 +45,31 @@ const Dashboard = () => {
 
     fetchUserData();
   }, [navigate]);
+
+  useEffect(() => {
+    const updateLocation = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+              'http://localhost:5000/api/users/location',
+              { latitude, longitude },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          } catch (error) {
+            console.error('Error updating location:', error);
+          }
+        });
+      } else {
+        console.error('Geolocation is not supported by this browser.');
+      }
+    };
+
+    updateLocation();
+  }, []);
 
   if (loading) {
     return (
@@ -84,6 +108,12 @@ const Dashboard = () => {
             onClick={() => navigate('/ask-help')}
           >
             Request Help
+          </button>
+          <button
+            className="action-button tertiary"
+            onClick={() => navigate('/nearby-users')}
+          >
+            Find Nearby Users
           </button>
         </div>
       </div>

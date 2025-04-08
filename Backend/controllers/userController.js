@@ -129,7 +129,7 @@ const getCurrentUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json(user); // Ensure `completedProfile` is included in the response
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -138,21 +138,28 @@ const getCurrentUserProfile = async (req, res) => {
 // Update user profile controller
 const updateProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
+    const { skills, interests, bio, profilePicture, completedProfile } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        skills: skills || [],
+        interests: interests || [],
+        bio: bio || '',
+        profilePicture: profilePicture || '',
+        completedProfile: completedProfile || false // Update completedProfile
+      },
+      { new: true } // Return the updated user
+    );
+
+    if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update profile fields with provided data
-    if (req.body.skills) user.skills = req.body.skills;
-    if (req.body.interests) user.interests = req.body.interests;
-    if (req.body.completedProfile !== undefined) user.completedProfile = req.body.completedProfile;
-
-    // Save the updated user data
-    await user.save();
-    res.json(user);
+    res.json(updatedUser);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Failed to update profile' });
   }
 };
 

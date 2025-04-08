@@ -16,12 +16,20 @@ const Login = () => {
         email,
         password,
       });
+
+      // Store the token in localStorage
       localStorage.setItem('token', response.data.token);
+
       const role = response.data.user.role;
+      const completedProfile = response.data.user.completedProfile;
+
+      // Redirect based on role and profile completion status
       if (role === 'admin') {
         navigate('/admin/adminDashboard');
+      } else if (!completedProfile) {
+        navigate('/profile-completion'); // Redirect to profile completion if not completed
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard'); // Redirect to user dashboard if profile is completed
       }
     } catch (err) {
       setError('Invalid email or password');

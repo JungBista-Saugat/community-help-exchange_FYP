@@ -1,5 +1,6 @@
 const VolunteerPost = require('../models/VolunteerPost');
 const User = require('../models/userModel');
+const Application = require('../models/applicationModel'); // Correct import path
 
 const getVolunteerPosts = async (req, res) => {
   try {
@@ -47,4 +48,14 @@ const approveApplication = async (req, res) => {
   }
 };
 
-module.exports = { createVolunteerPost, approveApplication, getVolunteerPosts };
+const getApplications = async (req, res) => {
+  try {
+    const applications = await Application.find().populate('user', 'name email');
+    res.json(applications);
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    res.status(500).json({ message: 'Failed to fetch applications' });
+  }
+};
+
+module.exports = { createVolunteerPost, approveApplication, getVolunteerPosts, getApplications };
