@@ -4,50 +4,45 @@ const User = require('../models/userModel');
 // Create new help request
 const createHelpRequest = async (req, res) => {
   try {
-    const { title, description, category, emergencyLevel, pointsDeducted } = req.body;
-    
+    const { title, description, category, emergencyLevel, pointsDeducted, location } = req.body;
+
+    // Validate user points
+    const user = await User.findById(req.user.id);
+    if (user.points < pointsDeducted) {
+      return res.status(400).json({ message: 'Insufficient points' });
+    }
+
+    // Create the help request
     const newRequest = new HelpRequest({
       title,
       description,
       category,
       emergencyLevel,
       pointsDeducted,
-      requestedBy: req.user.id
+      location,
+      requestedBy: req.user.id,
     });
 
     await newRequest.save();
-    
-    // Deduct points from user
-    await User.findByIdAndUpdate(req.user.id, {
-      $inc: { points: -pointsDeducted }
-    });
+
+    // Deduct points from the user
+    user.points -= pointsDeducted;
+    await user.save();
 
     res.status(201).json(newRequest);
-  } catch (err) {
-    console.error('Error creating help request:', err);
-    
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Validation Error',
-        errors: Object.values(err.errors).map(e => e.message) 
-      });
-    }
-    
-    res.status(500).json({ 
-      message: err.message || 'Server error occurred'
-    });
+  } catch (error) {
+    console.error('Error creating help request:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 const getHelpRequests = async (req, res) => {
   try {
-    const requests = await HelpRequest.find()
-      .populate('requestedBy', 'name email')
-      .populate('assignedTo', 'name');
-    res.json(requests);
-  } catch (err) {
-    console.error('Error fetching help requests:', err);
-    res.status(500).json({ message: err.message || 'Server error occurred' });
+    const helpRequests = await HelpRequest.find().populate('requestedBy', 'name email');
+    res.status(200).json(helpRequests);
+  } catch (error) {
+    console.error('Error fetching help requests:', error);
+    res.status(500).json({ message: 'Failed to fetch help requests' });
   }
 };
 
@@ -183,4 +178,28 @@ const offerHelp = async (req, res) => {
   }
 };
 
-module.exports = { createHelpRequest, getHelpRequests, getHelpRequestById, updateHelpRequest, deleteHelpRequest, updateRequestStatus, offerHelp };
+const getNearbyRequests = async (req, res) => {
+  const { latitude, longitude } = req.query;
+
+  try {
+    const requests = await HelpRequest.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          $maxDistance: 5000, // 5km radius
+        },
+      },
+      status: 'open',
+    });
+
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching nearby requests:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { createHelpRequest, getHelpRequests, getHelpRequestById, updateHelpRequest, deleteHelpRequest, updateRequestStatus, offerHelp, getNearbyRequests };

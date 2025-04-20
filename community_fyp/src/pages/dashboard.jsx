@@ -20,10 +20,11 @@ const Dashboard = () => {
         }
 
         const response = await axios.get('http://localhost:5000/api/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         console.log('User Data:', response.data); // Debug the user data
+        setUserData(response.data);
 
         // If user is admin, redirect to admin dashboard
         if (response.data.role === 'admin') {
@@ -32,11 +33,10 @@ const Dashboard = () => {
           return;
         }
 
-        
-        // If user is neither admin nor incomplete, stay on the dashboard
         console.log('Redirecting to dashboard...');
       } catch (err) {
         console.error('Error fetching user data:', err);
+        setError('Failed to fetch user data');
         navigate('/login');
       } finally {
         setLoading(false);
@@ -85,7 +85,7 @@ const Dashboard = () => {
     <Layout>
       <div className="dashboard-container">
         {error && <p className="error-message">{error}</p>}
-        
+
         <div className="points-card">
           <h3>Your Points</h3>
           <p>{userData?.points || 0}</p>
@@ -97,13 +97,13 @@ const Dashboard = () => {
         </div>
 
         <div className="button-container">
-          <button 
+          <button
             className="action-button primary"
             onClick={() => navigate('/volunteer-opportunities')}
           >
             Volunteer Now
           </button>
-          <button 
+          <button
             className="action-button secondary"
             onClick={() => navigate('/ask-help')}
           >

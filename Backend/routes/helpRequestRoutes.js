@@ -9,6 +9,9 @@ router.post('/', authMiddleware, helpRequestController.createHelpRequest);
 // Get all help requests
 router.get('/', authMiddleware, helpRequestController.getHelpRequests);
 
+// Get nearby help requests
+router.get('/nearby', authMiddleware, helpRequestController.getNearbyRequests);
+
 // Get a single help request by ID
 router.get('/:id', authMiddleware, helpRequestController.getHelpRequestById);
 

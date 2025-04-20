@@ -4,10 +4,11 @@ const Application = require('../models/applicationModel'); // Correct import pat
 
 const getVolunteerPosts = async (req, res) => {
   try {
-    const posts = await VolunteerPost.find().populate('creator', 'name');
-    res.json(posts);
+    const posts = await VolunteerPost.find();
+    res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching volunteer posts:', error);
+    res.status(500).json({ message: 'Failed to fetch volunteer posts' });
   }
 };
 

@@ -10,7 +10,35 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const loggedInUserId = 'currentUserId'; // Replace with actual logged-in user ID
+  const [loggedInUserId, setLoggedInUserId] = useState(null); // Fetch the actual user ID
+
+  useEffect(() => {
+    const fetchLoggedInUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setLoggedInUserId(data._id); // Set the logged-in user's ID
+
+        // Emit the identify event to the server
+        socket.emit('identify', data._id);
+      } catch (error) {
+        console.error('Error fetching logged-in user:', error);
+        alert(error.message || 'Failed to fetch logged-in user');
+      }
+    };
+
+    fetchLoggedInUser();
+  }, []);
 
   useEffect(() => {
     socket.on('newMessage', (message) => {
@@ -22,8 +50,8 @@ const Messages = () => {
       }
     });
 
-    return () => socket.disconnect();
-  }, [selectedUser]);
+    return () => socket.disconnect(); // Clean up the socket connection
+  }, [selectedUser, loggedInUserId]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -31,8 +59,8 @@ const Messages = () => {
         const token = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/users', {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!response.ok) {
@@ -52,18 +80,28 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedUser) {
+    if (selectedUser && loggedInUserId) {
       const fetchMessages = async () => {
-        const response = await fetch(
-          `http://localhost:5000/api/messages/${loggedInUserId}/${selectedUser._id}`
-        );
-        const data = await response.json();
-        setMessages(data);
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/messages/${loggedInUserId}/${selectedUser._id}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          setMessages(data);
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+          alert(error.message || 'Failed to fetch messages');
+        }
       };
 
       fetchMessages();
     }
-  }, [selectedUser]);
+  }, [selectedUser, loggedInUserId]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -71,10 +109,10 @@ const Messages = () => {
       const message = {
         senderId: loggedInUserId,
         receiverId: selectedUser._id,
-        text: newMessage
+        text: newMessage,
       };
-      setMessages([...messages, message]);
-      socket.emit('sendMessage', message);
+      setMessages([...messages, message]); // Update local state
+      socket.emit('sendMessage', message); // Emit the message to the server
       setNewMessage('');
     }
   };
@@ -86,7 +124,7 @@ const Messages = () => {
           <h2 className="page-title" style={{ color: 'white', marginBottom: '1rem' }}>Messages</h2>
           {users.map((user) => (
             <div
-              key={user._id}
+              key={user._id} // Use the user's unique _id as the key
               className={`chat-item ${selectedUser?._id === user._id ? 'active' : ''}`}
               onClick={() => setSelectedUser(user)}
             >
@@ -104,7 +142,7 @@ const Messages = () => {
           <div className="chat-messages">
             {messages.map((message) => (
               <div
-                key={message._id}
+                key={message._id} // Use the message's unique _id as the key
                 className={`message ${message.senderId === loggedInUserId ? 'message-sent' : 'message-received'}`}
               >
                 {message.text}

@@ -8,31 +8,47 @@ const AskHelp = () => {
     title: '',
     description: '',
     category: '',
-    emergencyLevel: 'medium', // Ensure this field matches the schema
-    pointsDeducted: 1 // Ensure this field is included
+    emergencyLevel: 'medium',
+    pointsDeducted: 1,
+    location: null, // Add location field
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/help-requests', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      // Get user's location
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const token = localStorage.getItem('token');
+          const requestData = {
+            ...formData,
+            location: {
+              type: 'Point',
+              coordinates: [position.coords.longitude, position.coords.latitude],
+            },
+          };
 
-      if (response.status === 201) {
-        alert('Help request submitted successfully!');
-        // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          category: '',
-          emergencyLevel: 'medium',
-          pointsDeducted: 1
-        });
-      }
+          // Submit the help request
+          const response = await axios.post('http://localhost:5000/api/help-requests', requestData, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (response.status === 201) {
+            alert('Help request submitted successfully!');
+            setFormData({
+              title: '',
+              description: '',
+              category: '',
+              emergencyLevel: 'medium',
+              pointsDeducted: 1,
+              location: null,
+            });
+          }
+        },
+        (err) => {
+          alert('Location access is required to submit a help request.');
+        }
+      );
     } catch (error) {
       console.error('Error submitting help request:', error);
       alert(error.response?.data?.message || 'Failed to submit help request');
@@ -41,9 +57,9 @@ const AskHelp = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -119,19 +135,6 @@ const AskHelp = () => {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="pointsDeducted">Points Deducted</label>
-                <input
-                  type="number"
-                  id="pointsDeducted"
-                  name="pointsDeducted"
-                  className="form-input"
-                  value={formData.pointsDeducted}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-              </div>
 
               <button type="submit" className="btn btn-primary submit-btn">
                 Submit Request

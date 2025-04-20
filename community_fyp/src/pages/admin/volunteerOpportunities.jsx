@@ -16,17 +16,20 @@ const VolunteerOpportunities = () => {
     const fetchOpportunities = async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('Token:', token); // Debug the token
         if (!token) {
-          navigate('/login');
-          return;
+          throw new Error('No token found. Please log in.');
         }
-        const response = await axios.get('http://localhost:5000/api/help-requests', {
-          headers: { Authorization: `Bearer ${token}` }
+
+        const response = await axios.get('http://localhost:5000/api/admin/volunteer-posts', {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure the token is sent in the correct format
+          },
         });
         setOpportunities(response.data);
       } catch (err) {
         setError('Failed to load volunteer opportunities');
-        console.error(err);
+        console.error('Error fetching volunteer opportunities:', err);
       } finally {
         setLoading(false);
       }

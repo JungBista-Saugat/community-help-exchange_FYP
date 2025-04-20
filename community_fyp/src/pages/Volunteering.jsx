@@ -13,15 +13,21 @@ const Volunteering = () => {
     const fetchOpportunities = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/help-requests', {
+        console.log('Token:', token); // Debug the token
+        if (!token) {
+          throw new Error('No token found. Please log in.');
+        }
+
+        const response = await axios.get('http://localhost:5000/api/admin/volunteer-posts', {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`, // Ensure the token is sent in the correct format
+          },
         });
+        console.log('Volunteer Opportunities:', response.data); // Debug the response
         setOpportunities(response.data);
       } catch (err) {
         setError('Failed to load volunteer opportunities');
-        console.error(err);
+        console.error('Error fetching volunteer opportunities:', err);
       } finally {
         setLoading(false);
       }
@@ -34,21 +40,20 @@ const Volunteering = () => {
     try {
       setApplyingId(opportunityId);
       const token = localStorage.getItem('token');
-      
-      await axios.post(`http://localhost:5000/api/help-requests/${opportunityId}/apply`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
 
-      // Update the local state to reflect the application
-      setOpportunities(opportunities.map(opp => {
-        if (opp._id === opportunityId) {
-          return {
-            ...opp,
-            hasApplied: true
-          };
+      await axios.post(
+        `http://localhost:5000/api/admin/volunteer-posts/${opportunityId}/apply`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-        return opp;
-      }));
+      );
+
+      setOpportunities((prevOpportunities) =>
+        prevOpportunities.map((opp) =>
+          opp._id === opportunityId ? { ...opp, hasApplied: true } : opp
+        )
+      );
 
       setApplyingId(null);
     } catch (err) {
@@ -71,29 +76,41 @@ const Volunteering = () => {
       <div className="page-container">
         <h1 className="page-title">Volunteer Opportunities</h1>
         <div className="help-grid">
-          {opportunities.map((opportunity) => (
-            <div className="help-card" key={opportunity._id}>
-              <div className="help-card-header">
-                <h3 className="help-card-title">{opportunity.title}</h3>
-                <p className="help-card-description">{opportunity.description}</p>
-                <p><strong>Location:</strong> {opportunity.location}</p>
-                <p><strong>Duration:</strong> {opportunity.duration}</p>
-                <p><strong>Time Commitment:</strong> {opportunity.commitment}</p>
-                <div className="tag-container">
-                  {opportunity.tags.map((tag, index) => (
-                    <span className="tag" key={index}>{tag}</span>
-                  ))}
+          {opportunities.length > 0 ? (
+            opportunities.map((opportunity) => (
+              <div className="help-card" key={opportunity._id}>
+                <div className="help-card-header">
+                  <h3 className="help-card-title">{opportunity.title}</h3>
+                  <p className="help-card-description">{opportunity.description}</p>
+                  <p>
+                    <strong>Location:</strong> {opportunity.location}
+                  </p>
+                  <p>
+                    <strong>Date:</strong> {new Date(opportunity.date).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Points Awarded:</strong> {opportunity.pointsAwarded}
+                  </p>
+                  <div className="tag-container">
+                    {opportunity.requiredSkills.map((skill, index) => (
+                      <span className="tag" key={index}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                  <button
+                    className="btn btn-primary help-card-button"
+                    onClick={() => handleApply(opportunity._id)}
+                    disabled={applyingId === opportunity._id}
+                  >
+                    {applyingId === opportunity._id ? 'Applying...' : 'Apply Now'}
+                  </button>
                 </div>
-                <button 
-                  className="btn btn-primary help-card-button" 
-                  onClick={() => handleApply(opportunity._id)}
-                  disabled={applyingId === opportunity._id}
-                >
-                  {applyingId === opportunity._id ? 'Applying...' : 'Apply Now'}
-                </button>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>No volunteer opportunities available at the moment.</p>
+          )}
         </div>
       </div>
     </Layout>
