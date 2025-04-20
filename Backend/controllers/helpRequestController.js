@@ -1,5 +1,6 @@
 const HelpRequest = require('../models/helpRequestModel');
 const User = require('../models/userModel');
+const { createNotification } = require('./notificationController');
 
 // Create new help request
 const createHelpRequest = async (req, res) => {
@@ -12,13 +13,18 @@ const createHelpRequest = async (req, res) => {
       return res.status(400).json({ message: 'Insufficient points' });
     }
 
+    // Calculate points reward based on emergency level
+    const pointsReward = calculatePointsReward(emergencyLevel, pointsDeducted);
+    console.log('Calculated points reward:', pointsReward);
+
     // Create the help request
     const newRequest = new HelpRequest({
       title,
       description,
       category,
       emergencyLevel,
-      pointsDeducted,
+      pointsDeducted: Number(pointsDeducted),
+      pointsReward: Number(pointsReward),
       location,
       requestedBy: req.user.id,
     });
@@ -26,7 +32,7 @@ const createHelpRequest = async (req, res) => {
     await newRequest.save();
 
     // Deduct points from the user
-    user.points -= pointsDeducted;
+    user.points -= Number(pointsDeducted);
     await user.save();
 
     res.status(201).json(newRequest);
@@ -34,6 +40,20 @@ const createHelpRequest = async (req, res) => {
     console.error('Error creating help request:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Helper function to calculate points reward
+const calculatePointsReward = (emergencyLevel, pointsDeducted) => {
+  const rewardMultipliers = {
+    low: 1.2,    // 20% more points
+    medium: 1.5, // 50% more points
+    high: 2.0    // 100% more points
+  };
+  
+  const multiplier = rewardMultipliers[emergencyLevel] || 1.0;
+  const reward = Math.round(Number(pointsDeducted) * multiplier);
+  console.log('Calculating points reward:', { pointsDeducted, emergencyLevel, multiplier, reward });
+  return reward;
 };
 
 const getHelpRequests = async (req, res) => {
@@ -161,20 +181,68 @@ const updateRequestStatus = async (req, res) => {
 
 const offerHelp = async (req, res) => {
   try {
-    const helpRequest = await HelpRequest.findById(req.params.id);
+    console.log('Offer help request received for ID:', req.params.id);
+    console.log('User ID:', req.user.id);
+
+    const helpRequest = await HelpRequest.findById(req.params.id)
+      .populate('requestedBy', 'name'); // Populate the requestedBy field to get user name
 
     if (!helpRequest) {
+      console.log('Help request not found');
       return res.status(404).json({ message: 'Help request not found' });
     }
 
-    helpRequest.assignedTo = req.user.id;
-    helpRequest.status = 'assigned';
-    await helpRequest.save();
+    const helper = await User.findById(req.user.id);
+    if (!helper) {
+      console.log('Helper user not found');
+      return res.status(404).json({ message: 'Helper user not found' });
+    }
 
-    res.json(helpRequest);
+    if (helpRequest.status !== 'open') {
+      console.log('Request status is not open:', helpRequest.status);
+      return res.status(400).json({ message: 'This request is no longer available' });
+    }
+
+    // Award points to the helper based on emergency level
+    const pointsToAward = helpRequest.pointsReward;
+    console.log('Points to award:', pointsToAward);
+    
+    helper.points += pointsToAward;
+    await helper.save();
+    console.log('Helper points updated');
+
+    // Update the help request
+    helpRequest.assignedTo = req.user.id;
+    helpRequest.status = 'completed';
+    helpRequest.completedAt = new Date();
+    await helpRequest.save();
+    console.log('Help request updated');
+
+    // Create notification for the request creator
+    await createNotification(
+      helpRequest.requestedBy._id, // Use _id since we populated requestedBy
+      `${helper.name} has offered to help with your request: "${helpRequest.title}"`,
+      'help_offer',
+      helpRequest._id
+    );
+
+    console.log('Notification created for request creator');
+
+    res.json({
+      message: 'Help request completed successfully',
+      pointsAwarded: pointsToAward,
+      helpRequest
+    });
   } catch (err) {
-    console.error('Error offering help:', err);
-    res.status(500).json({ message: err.message || 'Server error occurred' });
+    console.error('Detailed error in offerHelp:', {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
+    res.status(500).json({ 
+      message: 'Server error occurred',
+      error: err.message 
+    });
   }
 };
 

@@ -14,6 +14,7 @@ const { Server } = require('socket.io');
 const Message = require('./models/messageModel'); // Create a Message model
 const setupSocket = require('./socket'); // Import setupSocket
 const morgan = require('morgan'); // Import morgan
+const notificationRoutes = require('./routes/notificationRoutes');
 
 dotenv.config();
 connectDB(); // Connect to MongoDB
@@ -40,6 +41,7 @@ app.use("/api/users", userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/help-requests', helpRequestRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

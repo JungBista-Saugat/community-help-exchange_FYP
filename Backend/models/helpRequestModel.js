@@ -6,12 +6,15 @@ const helpRequestSchema = new mongoose.Schema({
   category: String,
   emergencyLevel: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   pointsDeducted: { type: Number, required: true },
+  pointsReward: { type: Number, required: true },
   location: {
     type: { type: String, default: 'Point' },
     coordinates: [Number],
   },
   requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, default: 'open' },
+  completedAt: { type: Date },
 });
 
 helpRequestSchema.index({ location: '2dsphere' });

@@ -57,14 +57,14 @@ const OfferHelp = () => {
         }
       );
 
-      // Update the local state to reflect the offered help
+      // Update the local state to reflect the completed help request
       setHelpRequests((prevRequests) =>
         prevRequests.map((request) =>
-          request._id === requestId ? response.data : request
+          request._id === requestId ? response.data.helpRequest : request
         )
       );
 
-      alert('Help offered successfully!');
+      alert(`Help request completed successfully! You earned ${response.data.pointsAwarded} points!`);
     } catch (error) {
       console.error('Error offering help:', error);
       alert(error.response?.data?.message || 'Failed to offer help');
@@ -88,32 +88,37 @@ const OfferHelp = () => {
             Show Nearby Requests
           </button>
           <div className="help-grid">
-            {(showNearby ? nearbyRequests : helpRequests).map((request) => (
-              <div className="help-card" key={request._id}>
-                <div className="help-card-header">
-                  <h2 className="help-card-title">{request.title}</h2>
-                  <div className="tag-container">
-                    <span className={`tag tag-${request.category.toLowerCase()}`}>
-                      {request.category}
-                    </span>
-                    <span className={`tag tag-${request.emergencyLevel}`}>
-                      {request.emergencyLevel.charAt(0).toUpperCase() +
-                        request.emergencyLevel.slice(1)}
-                    </span>
+            {(showNearby ? nearbyRequests : helpRequests)
+              .filter(request => request.status === 'open')
+              .map((request) => (
+                <div className="help-card" key={request._id}>
+                  <div className="help-card-header">
+                    <h2 className="help-card-title">{request.title}</h2>
+                    <div className="tag-container">
+                      <span className={`tag tag-${request.category.toLowerCase()}`}>
+                        {request.category}
+                      </span>
+                      <span className={`tag tag-${request.emergencyLevel}`}>
+                        {request.emergencyLevel.charAt(0).toUpperCase() +
+                          request.emergencyLevel.slice(1)}
+                      </span>
+                    </div>
                   </div>
+                  <p className="help-card-description">{request.description}</p>
+                  <p className="help-card-user">
+                    Posted by: {request.requestedBy ? request.requestedBy.name : 'Unknown'}
+                  </p>
+                  <p className="help-card-points">
+                    Points Reward: {request.pointsReward}
+                  </p>
+                  <button
+                    className="btn btn-primary help-card-button"
+                    onClick={() => handleOfferHelp(request._id)}
+                  >
+                    Offer Help
+                  </button>
                 </div>
-                <p className="help-card-description">{request.description}</p>
-                <p className="help-card-user">
-                  Posted by: {request.requestedBy ? request.requestedBy.name : 'Unknown'}
-                </p>
-                <button
-                  className="btn btn-primary help-card-button"
-                  onClick={() => handleOfferHelp(request._id)}
-                >
-                  Offer Help
-                </button>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>
