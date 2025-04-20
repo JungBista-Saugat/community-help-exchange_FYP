@@ -1,25 +1,20 @@
 // filepath: d:\community-help-exchange_FYP\Backend\routes\messageRoutes.js
 const express = require('express');
 const router = express.Router();
-const Message = require('../models/messageModel');
-const { protect } = require('../middleware/authMiddleware');
+const protect = require('../middleware/authMiddleware');
+const { 
+    createMessage,
+    getMessagesBetweenUsers,
+    getUserMessages
+} = require('../controllers/messageController');
 
-router.get('/:senderId/:receiverId', protect, async (req, res) => {
-  const { senderId, receiverId } = req.params;
+// Create a new message
+router.post('/', protect, createMessage);
 
-  try {
-    const messages = await Message.find({
-      $or: [
-        { senderId, receiverId },
-        { senderId: receiverId, receiverId: senderId },
-      ],
-    }).sort({ createdAt: 1 });
+// Get messages between two users
+router.get('/conversation/:userId1/:userId2', protect, getMessagesBetweenUsers);
 
-    res.status(200).json(messages); // Ensure _id is included in the response
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ message: 'Failed to fetch messages' });
-  }
-});
+// Get all messages for a user
+router.get('/user/:userId', protect, getUserMessages);
 
 module.exports = router;

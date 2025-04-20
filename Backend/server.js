@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const userRoutes = require('./routes/userRoutes'); // Correctly import userRoutes
 const adminRoutes = require('./routes/adminRoutes');
 const helpRequestRoutes = require('./routes/helpRequestRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 const mongoose = require('mongoose');
 const http = require('http');
@@ -38,6 +39,7 @@ app.use(morgan('dev'));
 app.use("/api/users", userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/help-requests', helpRequestRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

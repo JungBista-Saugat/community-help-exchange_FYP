@@ -16,26 +16,47 @@ const setupSocket = (server) => {
 
     // Listen for user identification
     socket.on('identify', (userId) => {
+      // Remove any existing socket mappings for this user
+      for (const [existingUserId, existingSocketId] of users.entries()) {
+        if (existingUserId === userId) {
+          users.delete(existingUserId);
+        }
+      }
       users.set(userId, socket.id); // Map userId to socket.id
       console.log(`User ${userId} is associated with socket ${socket.id}`);
     });
 
     // Handle sending messages
-    socket.on('sendMessage', async ({ senderId, receiverId, text }) => {
+    socket.on('sendMessage', async (message) => {
       try {
-        const message = new Message({ senderId, receiverId, text });
-        await message.save();
+        // If message is not already saved (has no _id), save it
+        if (!message._id) {
+          const newMessage = new Message({
+            senderId: message.senderId,
+            receiverId: message.receiverId,
+            text: message.text
+          });
+          message = await newMessage.save();
+        }
 
-        // Emit the message to the receiver if they are connected
-        const receiverSocketId = users.get(receiverId);
+        // Get receiver's socket id
+        const receiverSocketId = users.get(message.receiverId);
+        
+        // Send to receiver if they are connected
         if (receiverSocketId) {
           io.to(receiverSocketId).emit('newMessage', message);
         }
 
-        // Optionally, emit the message back to the sender
-        socket.emit('newMessage', message);
+        // Send back to sender's socket to confirm delivery
+        const senderSocketId = users.get(message.senderId);
+        if (senderSocketId && senderSocketId !== socket.id) {
+          io.to(senderSocketId).emit('newMessage', message);
+        } else {
+          socket.emit('newMessage', message);
+        }
       } catch (error) {
-        console.error('Error saving message:', error);
+        console.error('Error handling message:', error);
+        socket.emit('messageError', { error: 'Failed to process message' });
       }
     });
 
@@ -44,7 +65,8 @@ const setupSocket = (server) => {
       console.log('A user disconnected:', socket.id);
       for (const [userId, socketId] of users.entries()) {
         if (socketId === socket.id) {
-          users.delete(userId); // Remove the user from the map
+          users.delete(userId);
+          console.log(`User ${userId} has been removed from active users`);
           break;
         }
       }

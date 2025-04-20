@@ -26,7 +26,7 @@ router.post("/forgot-password", forgotPassword);
 router.put("/reset-password/:token", resetPassword);
 
 // Protected routes
-router.get("/me", protect, getUsers);
+router.get("/me", protect, getCurrentUserProfile);
 router.put("/profile", protect, updateProfile); // Update user profile
 
 

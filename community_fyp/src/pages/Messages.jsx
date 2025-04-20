@@ -16,6 +16,10 @@ const Messages = () => {
     const fetchLoggedInUser = async () => {
       try {
         const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
         const response = await fetch('http://localhost:5000/api/users/me', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -23,13 +27,15 @@ const Messages = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`Error: ${response.status} ${response.statusText}`);
+          throw new Error('Failed to fetch user data');
         }
 
         const data = await response.json();
-        setLoggedInUserId(data._id); // Set the logged-in user's ID
+        if (!data._id) {
+          throw new Error('Invalid user data received');
+        }
 
-        // Emit the identify event to the server
+        setLoggedInUserId(data._id);
         socket.emit('identify', data._id);
       } catch (error) {
         console.error('Error fetching logged-in user:', error);
@@ -41,16 +47,71 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
+    if (selectedUser && loggedInUserId) {
+      const fetchMessages = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(
+            `http://localhost:5000/api/messages/conversation/${loggedInUserId}/${selectedUser._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          setMessages(data);
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+          alert(error.message || 'Failed to fetch messages');
+        }
+      };
+
+      fetchMessages();
+      
+      // Reset messages when changing users
+      return () => {
+        setMessages([]);
+      };
+    }
+  }, [selectedUser, loggedInUserId]);
+
+  useEffect(() => {
+    // Clear existing listeners
+    socket.off('newMessage');
+
     socket.on('newMessage', (message) => {
-      if (
-        (message.senderId === loggedInUserId && message.receiverId === selectedUser?._id) ||
-        (message.senderId === selectedUser?._id && message.receiverId === loggedInUserId)
-      ) {
-        setMessages((prev) => [...prev, message]);
+      // Only add message if it's part of the current conversation
+      if (selectedUser && (
+        (message.senderId === loggedInUserId && message.receiverId === selectedUser._id) ||
+        (message.receiverId === loggedInUserId && message.senderId === selectedUser._id)
+      )) {
+        setMessages(prevMessages => {
+          // Check if message already exists
+          const messageExists = prevMessages.some(m => 
+            m._id === message._id || 
+            (m.text === message.text && 
+             m.senderId === message.senderId && 
+             m.receiverId === message.receiverId &&
+             m.createdAt === message.createdAt)
+          );
+          
+          if (!messageExists) {
+            return [...prevMessages, message];
+          }
+          return prevMessages;
+        });
       }
     });
 
-    return () => socket.disconnect(); // Clean up the socket connection
+    return () => {
+      socket.off('newMessage');
+    };
   }, [selectedUser, loggedInUserId]);
 
   useEffect(() => {
@@ -68,8 +129,12 @@ const Messages = () => {
         }
 
         const data = await response.json();
-        console.log('Fetched users:', data);
-        setUsers(data);
+        // Filter out admins and the current user
+        const filteredUsers = data.filter(user => 
+          user.role === 'user' && user._id !== loggedInUserId
+        );
+        console.log('Fetched users:', filteredUsers);
+        setUsers(filteredUsers);
       } catch (error) {
         console.error('Error fetching users:', error);
         alert(error.message || 'Failed to fetch users');
@@ -79,41 +144,52 @@ const Messages = () => {
     fetchUsers();
   }, []);
 
-  useEffect(() => {
-    if (selectedUser && loggedInUserId) {
-      const fetchMessages = async () => {
-        try {
-          const response = await fetch(
-            `http://localhost:5000/api/messages/${loggedInUserId}/${selectedUser._id}`
-          );
-
-          if (!response.ok) {
-            throw new Error(`Error: ${response.status} ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          setMessages(data);
-        } catch (error) {
-          console.error('Error fetching messages:', error);
-          alert(error.message || 'Failed to fetch messages');
-        }
-      };
-
-      fetchMessages();
-    }
-  }, [selectedUser, loggedInUserId]);
-
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim() && selectedUser) {
+    if (!newMessage.trim() || !selectedUser || !loggedInUserId) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const message = {
         senderId: loggedInUserId,
         receiverId: selectedUser._id,
-        text: newMessage,
+        text: newMessage.trim(),
       };
-      setMessages([...messages, message]); // Update local state
-      socket.emit('sendMessage', message); // Emit the message to the server
+
+      console.log('Sending message:', message); // Debug log
+
+      const response = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(message),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to send message');
+      }
+
+      // Update local state with the saved message
+      setMessages(prev => [...prev, responseData]);
+      
+      // Emit the saved message through socket
+      socket.emit('sendMessage', responseData);
+      
+      // Clear input
       setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert(error.message || 'Failed to send message');
     }
   };
 
@@ -142,10 +218,20 @@ const Messages = () => {
           <div className="chat-messages">
             {messages.map((message) => (
               <div
-                key={message._id} // Use the message's unique _id as the key
+                key={message._id || `${message.senderId}-${message.text}-${Date.now()}`}
                 className={`message ${message.senderId === loggedInUserId ? 'message-sent' : 'message-received'}`}
               >
-                {message.text}
+                <div className="message-content">
+                  <p className="message-text">{message.text}</p>
+                  {message.createdAt && (
+                    <span className="message-time">
+                      {new Date(message.createdAt).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -158,8 +244,13 @@ const Messages = () => {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type your message..."
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(e)}
+              disabled={!selectedUser} // Disable input if no user is selected
             />
-            <button className="btn btn-primary" onClick={handleSendMessage}>
+            <button 
+              className="btn btn-primary" 
+              onClick={handleSendMessage}
+              disabled={!selectedUser || !newMessage.trim()} // Disable button if no user selected or empty message
+            >
               Send
             </button>
           </div>
