@@ -1,0 +1,274 @@
+/* Volunteer Opportunities Page Styling */
+
+.volunteer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 20px;
+}
+
+.volunteer-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 1px solid #f0f0f0;
+}
+
+.volunteer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
+}
+
+.volunteer-card-content {
+  padding: 24px;
+  flex: 1;
+}
+
+.volunteer-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 12px 0;
+}
+
+.volunteer-description {
+  color: #5d6778;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.volunteer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #5d6778;
+}
+
+.detail-icon {
+  color: #1E90FF;
+  font-size: 16px;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.skill-tag {
+  padding: 6px 12px;
+  background-color: #e8f4fd;
+  color: #1E90FF;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.skill-tag:hover {
+  background-color: #d0e8fb;
+}
+
+.volunteer-card-footer {
+  padding: 16px 24px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: center;
+}
+
+.apply-button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right, #1E90FF, #4169E1);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.apply-button:hover {
+  background: linear-gradient(to right, #1a7fe0, #3a5fd5);
+  transform: translateY(-2px);
+}
+
+.apply-button:disabled {
+  background: linear-gradient(to right, #85bcf1, #95a7e8);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.application-status-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.status-icon {
+  font-size: 18px;
+}
+
+.status-icon.approved {
+  color: #2ecc71;
+}
+
+.status-icon.pending {
+  color: #f39c12;
+}
+
+.status-icon.rejected {
+  color: #e74c3c;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.status-badge.approved {
+  background-color: #d5f5e3;
+  color: #27ae60;
+}
+
+.status-badge.pending {
+  background-color: #fef9e7;
+  color: #f39c12;
+}
+
+.status-badge.rejected {
+  background-color: #fadbd8;
+  color: #e74c3c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .volunteer-grid {
+    grid-template-columns: 1fr;
+    padding: 15px;
+  }
+  
+  .volunteer-card-content {
+    padding: 20px;
+  }
+  
+  .volunteer-card-footer {
+    padding: 12px 20px;
+  }
+}
+
+/* Admin volunteer card specific styles */
+.admin-volunteer-card {
+  border-left: 4px solid #1E90FF;
+}
+
+.admin-card-footer {
+  justify-content: space-between;
+}
+
+.admin-action-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-action-button.edit {
+  background-color: #f0f8ff;
+  color: #1E90FF;
+  border: 1px solid #1E90FF;
+}
+
+.admin-action-button.edit:hover {
+  background-color: #1E90FF;
+  color: white;
+}
+
+.admin-action-button.delete {
+  background-color: #fff5f5;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+}
+
+.admin-action-button.delete:hover {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.button-icon {
+  font-size: 14px;
+}
+
+/* Application card specific styles */
+.application-card {
+  border-left: 4px solid #f39c12;
+}
+
+.application-card .volunteer-title {
+  color: #f39c12;
+  border-bottom: 1px solid #f3f3f3;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.application-card .detail-item strong {
+  color: #555;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* Custom button styles for the application approval/rejection */
+.application-card .admin-action-button.edit {
+  background-color: #e8f5e9;
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
+}
+
+.application-card .admin-action-button.edit:hover {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.application-card .admin-action-button.delete {
+  background-color: #ffebee;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+} 

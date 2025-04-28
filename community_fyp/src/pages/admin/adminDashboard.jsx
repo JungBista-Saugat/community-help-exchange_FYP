@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
 import '../../styles/admin.css';
+import '../../styles/volunteering.css';
+import { FaMapMarkerAlt, FaCalendarAlt, FaCoins, FaEnvelope, FaUser, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const AdminDashboard = () => {
   const [applications, setApplications] = useState([]);
@@ -98,31 +100,55 @@ const AdminDashboard = () => {
           {applications.length === 0 ? (
             <p>No pending applications at the moment.</p>
           ) : (
-            <div className="applications-list">
+            <div className="volunteer-grid">
               {applications
                 .filter(app => app.status === 'pending')
                 .map((app) => (
-                <div key={app.applicationId} className="application-card">
-                  <div className="application-info">
-                    <h3>Application for: {app.postTitle}</h3>
-                    <p><strong>Applicant:</strong> {app.user.name}</p>
-                    <p><strong>Email:</strong> {app.user.email}</p>
-                    <p><strong>Applied on:</strong> {formatDate(app.appliedAt)}</p>
-                    <p><strong>Location:</strong> {app.location}</p>
-                    <p><strong>Date:</strong> {formatDate(app.date)}</p>
-                    <p><strong>Points to Award:</strong> {app.pointsAwarded}</p>
+                <div key={app.applicationId} className="volunteer-card application-card">
+                  <div className="volunteer-card-content">
+                    <h3 className="volunteer-title">Application for: {app.postTitle}</h3>
+                    
+                    <div className="volunteer-details">
+                      <div className="detail-item">
+                        <FaUser className="detail-icon" />
+                        <span><strong>Applicant:</strong> {app.user.name}</span>
+                      </div>
+                      <div className="detail-item">
+                        <FaEnvelope className="detail-icon" />
+                        <span><strong>Email:</strong> {app.user.email}</span>
+                      </div>
+                      <div className="detail-item">
+                        <FaCalendarAlt className="detail-icon" />
+                        <span><strong>Applied on:</strong> {formatDate(app.appliedAt)}</span>
+                      </div>
+                      <div className="detail-item">
+                        <FaMapMarkerAlt className="detail-icon" />
+                        <span><strong>Location:</strong> {app.location}</span>
+                      </div>
+                      <div className="detail-item">
+                        <FaCalendarAlt className="detail-icon" />
+                        <span><strong>Date:</strong> {formatDate(app.date)}</span>
+                      </div>
+                      <div className="detail-item">
+                        <FaCoins className="detail-icon" />
+                        <span><strong>Points to Award:</strong> {app.pointsAwarded}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="application-actions">
+                  
+                  <div className="volunteer-card-footer admin-card-footer">
                     <button
-                      className="approve-button"
+                      className="admin-action-button edit"
                       onClick={() => handleApproveApplication(app.postId, app.applicationId)}
                     >
+                      <FaCheckCircle className="button-icon" />
                       Approve
                     </button>
                     <button
-                      className="reject-button"
+                      className="admin-action-button delete"
                       onClick={() => handleRejectApplication(app.postId, app.applicationId)}
                     >
+                      <FaTimesCircle className="button-icon" />
                       Reject
                     </button>
                   </div>

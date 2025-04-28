@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar'; 
 import UpdateHelpRequest from '../UpdateHelpRequest';
 import '../../styles/admin.css';
+import '../../styles/volunteering.css';
+import { FaMapMarkerAlt, FaCalendarAlt, FaCoins, FaPencilAlt, FaTrash, FaLayerGroup } from 'react-icons/fa';
 
 const VolunteerOpportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
@@ -84,37 +86,60 @@ const VolunteerOpportunities = () => {
         ) : opportunities.length === 0 ? (
           <p>No volunteer opportunities available at the moment.</p>
         ) : (
-          <div className="opportunities-grid">
+          <div className="volunteer-grid">
             {opportunities.map((opportunity) => (
-              <div key={opportunity._id} className="opportunity-card">
-                <h3>{opportunity.title}</h3>
-                <p className="opportunity-description">{opportunity.description}</p>
-                <div className="opportunity-details">
-                  <p><strong>Category:</strong> {opportunity.category}</p>
-                  <p><strong>Emergency Level:</strong> {opportunity.emergencyLevel}</p>
-                  <p><strong>Points Deducted:</strong> {opportunity.pointsDeducted}</p>
+              <div key={opportunity._id} className="volunteer-card admin-volunteer-card">
+                <div className="volunteer-card-content">
+                  <h3 className="volunteer-title">{opportunity.title}</h3>
+                  <p className="volunteer-description">{opportunity.description}</p>
+                  
+                  <div className="volunteer-details">
+                    <div className="detail-item">
+                      <FaMapMarkerAlt className="detail-icon" />
+                      <span>{opportunity.location || 'No location specified'}</span>
+                    </div>
+                    {opportunity.date && (
+                      <div className="detail-item">
+                        <FaCalendarAlt className="detail-icon" />
+                        <span>{formatDate(opportunity.date)}</span>
+                      </div>
+                    )}
+                    <div className="detail-item">
+                      <FaCoins className="detail-icon" />
+                      <span>{opportunity.pointsAwarded || opportunity.pointsDeducted} points</span>
+                    </div>
+                    {opportunity.category && (
+                      <div className="detail-item">
+                        <FaLayerGroup className="detail-icon" />
+                        <span>Category: {opportunity.category}</span>
+                      </div>
+                    )}
+                  </div>
+                  
                   {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
-                    <div>
-                      <strong>Required Skills:</strong>
-                      <ul className="skills-list">
-                        {opportunity.requiredSkills.map((skill, index) => (
-                          <li key={index}>{skill}</li>
-                        ))}
-                      </ul>
+                    <div className="skills-container">
+                      {opportunity.requiredSkills.map((skill, index) => (
+                        <span className="skill-tag" key={index}>
+                          {skill}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
-                <div className="opportunity-actions">
+                
+                <div className="volunteer-card-footer admin-card-footer">
                   <button 
-                    className="update-button" 
+                    className="admin-action-button edit"
                     onClick={() => setEditingOpportunity(opportunity)}
                   >
-                    Update
+                    <FaPencilAlt className="button-icon" />
+                    Edit
                   </button>
                   <button 
-                    className="delete-button" 
+                    className="admin-action-button delete"
                     onClick={() => handleDelete(opportunity._id)}
                   >
+                    <FaTrash className="button-icon" />
                     Delete
                   </button>
                 </div>

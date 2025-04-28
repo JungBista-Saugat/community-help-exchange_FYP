@@ -23,7 +23,7 @@ const Dashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log('User Data:', response.data); // Debug the user data
+        console.log('User Data in Dashboard:', response.data); // Debug the user data
         setUserData(response.data);
 
         // If user is admin, redirect to admin dashboard
@@ -71,6 +71,22 @@ const Dashboard = () => {
     updateLocation();
   }, []);
 
+  // Function to get username with proper fallbacks
+  const getUserName = () => {
+    if (!userData) return 'User';
+    
+    // Check different possible properties for user name
+    if (userData.name) return userData.name;
+    if (userData.username) return userData.username;
+    if (userData.firstName) {
+      return userData.lastName 
+        ? `${userData.firstName} ${userData.lastName}` 
+        : userData.firstName;
+    }
+    
+    return 'User';
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -85,6 +101,11 @@ const Dashboard = () => {
     <Layout>
       <div className="dashboard-container">
         {error && <p className="error-message">{error}</p>}
+
+        <div className="welcome-message">
+          <h2>Hi there, {getUserName()}!</h2>
+          <p>Welcome to Community Help Exchange Platform</p>
+        </div>
 
         <div className="points-card">
           <h3>Your Points</h3>

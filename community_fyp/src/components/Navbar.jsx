@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaBell, FaUser, FaSignInAlt } from 'react-icons/fa';
+import { FaBell, FaUser, FaSignInAlt } from 'react-icons/fa';
 import { useNavigate, NavLink } from 'react-router-dom';
 import axios from 'axios';
 import Notification from './Notification';
@@ -10,12 +10,29 @@ const Navbar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     fetchUnreadCount();
+    fetchUserData();
     const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get('http://localhost:5000/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('User data in Navbar:', response.data); // Log for debugging
+      setUserData(response.data);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   const fetchUnreadCount = async () => {
     try {
@@ -80,18 +97,35 @@ const Navbar = () => {
     setShowNotifications(!showNotifications);
   };
 
+  // Function to get username with proper fallbacks
+  const getUserName = () => {
+    if (!userData) return 'User';
+    
+    // Check different possible properties for user name
+    if (userData.name) return userData.name;
+    if (userData.username) return userData.username;
+    if (userData.firstName) {
+      return userData.lastName 
+        ? `${userData.firstName} ${userData.lastName}` 
+        : userData.firstName;
+    }
+    
+    return 'User';
+  };
+
   return (
     <nav className="navbar">
-      <div className="search-container">
-        <div className="search-wrapper">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search..."
-          />
-          <FaSearch className="search-icon" />
+      {userData && (
+        <div className="user-info">
+          <div className="username-badge">
+            {getUserName()}
+          </div>
+          <div className="points-display">
+            <span className="points-label">Points:</span> 
+            <span className="points-value">{userData.points || 0}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="nav-actions">
         <div className="notification-icon" onClick={toggleNotifications}>
@@ -103,10 +137,22 @@ const Navbar = () => {
         <NavLink to="/profile" className={({ isActive }) => `icon-button user-icon ${isActive ? 'active' : ''}`}>
           <FaUser />
         </NavLink>
-        <button className="login-button" onClick={() => navigate('/login')}>
-          <FaSignInAlt className="login-icon" />
-          Login
-        </button>
+        {!userData ? (
+          <button className="login-button" onClick={() => navigate('/login')}>
+            <FaSignInAlt className="login-icon" />
+            Login
+          </button>
+        ) : (
+          <button 
+            className="logout-button" 
+            onClick={() => {
+              localStorage.removeItem('token');
+              navigate('/login');
+            }}
+          >
+            Logout
+          </button>
+        )}
       </div>
 
       <Notification 

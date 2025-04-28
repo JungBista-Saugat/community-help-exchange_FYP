@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/common.css';
+import '../styles/volunteering.css';
 import Layout from '../components/Layout';
+import { FaMapMarkerAlt, FaCalendarAlt, FaCoins, FaCheckCircle } from 'react-icons/fa';
 
 const Volunteering = () => {
   const [opportunities, setOpportunities] = useState([]);
@@ -99,40 +101,51 @@ const Volunteering = () => {
     <Layout>
       <div className="page-container">
         <h1 className="page-title">Volunteer Opportunities</h1>
-        <div className="help-grid">
+        <div className="volunteer-grid">
           {opportunities.length > 0 ? (
             opportunities.map((opportunity) => (
-              <div className="help-card" key={opportunity._id}>
-                <div className="help-card-header">
-                  <h3 className="help-card-title">{opportunity.title}</h3>
-                  <p className="help-card-description">{opportunity.description}</p>
-                  <p>
-                    <strong>Location:</strong> {opportunity.location}
-                  </p>
-                  <p>
-                    <strong>Date:</strong> {formatDate(opportunity.date)}
-                  </p>
-                  <p>
-                    <strong>Points Awarded:</strong> {opportunity.pointsAwarded}
-                  </p>
-                  <div className="tag-container">
-                    {opportunity.requiredSkills && opportunity.requiredSkills.map((skill, index) => (
-                      <span className="tag" key={index}>
-                        {skill}
-                      </span>
-                    ))}
+              <div className="volunteer-card" key={opportunity._id}>
+                <div className="volunteer-card-content">
+                  <h3 className="volunteer-title">{opportunity.title}</h3>
+                  <p className="volunteer-description">{opportunity.description}</p>
+                  
+                  <div className="volunteer-details">
+                    <div className="detail-item">
+                      <FaMapMarkerAlt className="detail-icon" />
+                      <span>{opportunity.location}</span>
+                    </div>
+                    <div className="detail-item">
+                      <FaCalendarAlt className="detail-icon" />
+                      <span>{formatDate(opportunity.date)}</span>
+                    </div>
+                    <div className="detail-item">
+                      <FaCoins className="detail-icon" />
+                      <span>{opportunity.pointsAwarded} points</span>
+                    </div>
                   </div>
-                  {opportunity.hasApplied ? (
-                    <div className="application-status">
-                      <p>
-                        <span className={getStatusBadgeClass(opportunity.applicationStatus)}>
-                          Application Status: {opportunity.applicationStatus.charAt(0).toUpperCase() + opportunity.applicationStatus.slice(1)}
+                  
+                  {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
+                    <div className="skills-container">
+                      {opportunity.requiredSkills.map((skill, index) => (
+                        <span className="skill-tag" key={index}>
+                          {skill}
                         </span>
-                      </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="volunteer-card-footer">
+                  {opportunity.hasApplied ? (
+                    <div className="application-status-container">
+                      <FaCheckCircle className={`status-icon ${opportunity.applicationStatus}`} />
+                      <span className={getStatusBadgeClass(opportunity.applicationStatus)}>
+                        {opportunity.applicationStatus.charAt(0).toUpperCase() + opportunity.applicationStatus.slice(1)}
+                      </span>
                     </div>
                   ) : (
                     <button
-                      className="btn btn-primary help-card-button"
+                      className="apply-button"
                       onClick={() => handleApply(opportunity._id)}
                       disabled={applyingId === opportunity._id}
                     >
