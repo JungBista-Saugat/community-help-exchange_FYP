@@ -12,7 +12,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['help_offer', 'help_accepted', 'help_completed'],
+    enum: ['help_offer', 'help_accepted', 'help_completed', 'volunteer_approved', 'volunteer_rejected'],
     required: true
   },
   read: {
@@ -22,6 +22,10 @@ const notificationSchema = new mongoose.Schema({
   relatedRequest: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'HelpRequest'
+  },
+  relatedVolunteerPost: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'VolunteerPost'
   },
   createdAt: {
     type: Date,

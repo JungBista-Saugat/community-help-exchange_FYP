@@ -44,7 +44,7 @@ const AdminDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       // Remove the approved application from the list
-      setApplications(applications.filter(app => app._id !== applicationId));
+      setApplications(applications.filter(app => app.applicationId !== applicationId));
     } catch (err) {
       setError('Failed to approve application');
       console.error(err);
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       // Remove the rejected application from the list
-      setApplications(applications.filter(app => app._id !== applicationId));
+      setApplications(applications.filter(app => app.applicationId !== applicationId));
     } catch (err) {
       setError('Failed to reject application');
       console.error(err);
@@ -99,27 +99,29 @@ const AdminDashboard = () => {
             <p>No pending applications at the moment.</p>
           ) : (
             <div className="applications-list">
-              {applications.map((app) => (
-                <div key={app._id} className="application-card">
+              {applications
+                .filter(app => app.status === 'pending')
+                .map((app) => (
+                <div key={app.applicationId} className="application-card">
                   <div className="application-info">
-                    <h3>Application for: {app.post.title}</h3>
+                    <h3>Application for: {app.postTitle}</h3>
                     <p><strong>Applicant:</strong> {app.user.name}</p>
                     <p><strong>Email:</strong> {app.user.email}</p>
                     <p><strong>Applied on:</strong> {formatDate(app.appliedAt)}</p>
-                    <p>
-                      <strong>Skills:</strong> {app.user.skills?.join(', ') || 'None listed'}
-                    </p>
+                    <p><strong>Location:</strong> {app.location}</p>
+                    <p><strong>Date:</strong> {formatDate(app.date)}</p>
+                    <p><strong>Points to Award:</strong> {app.pointsAwarded}</p>
                   </div>
                   <div className="application-actions">
                     <button
                       className="approve-button"
-                      onClick={() => handleApproveApplication(app.post._id, app._id)}
+                      onClick={() => handleApproveApplication(app.postId, app.applicationId)}
                     >
                       Approve
                     </button>
                     <button
                       className="reject-button"
-                      onClick={() => handleRejectApplication(app.post._id, app._id)}
+                      onClick={() => handleRejectApplication(app.postId, app.applicationId)}
                     >
                       Reject
                     </button>

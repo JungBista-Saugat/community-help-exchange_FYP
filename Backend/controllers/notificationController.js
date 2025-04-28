@@ -5,7 +5,8 @@ const getUserNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id })
       .sort({ createdAt: -1 })
-      .populate('relatedRequest');
+      .populate('relatedRequest')
+      .populate('relatedVolunteerPost');
     res.json(notifications);
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -43,13 +44,14 @@ const markAsRead = async (req, res) => {
 };
 
 // Create notification
-const createNotification = async (userId, message, type, relatedRequest) => {
+const createNotification = async (userId, message, type, relatedRequest, relatedVolunteerPost) => {
   try {
     const notification = new Notification({
       userId,
       message,
       type,
-      relatedRequest
+      relatedRequest,
+      relatedVolunteerPost
     });
     await notification.save();
     return notification;

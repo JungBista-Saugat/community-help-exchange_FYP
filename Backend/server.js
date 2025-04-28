@@ -22,7 +22,8 @@ connectDB(); // Connect to MongoDB
 const app = express();
 const server = http.createServer(app);
 
-setupSocket(server); // Setup socket
+// Setup socket and get the socket instance
+const socketInstance = setupSocket(server);
 
 // security headers
 app.use(helmet());
@@ -35,6 +36,9 @@ app.use(express.json());
 
 // request logging
 app.use(morgan('dev'));
+
+// Make socket instance available to routes
+app.set('socketInstance', socketInstance);
 
 // API Routes
 app.use("/api/users", userRoutes);
@@ -52,3 +56,5 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+
+module.exports = { app, socketInstance };

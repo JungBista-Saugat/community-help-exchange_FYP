@@ -9,7 +9,8 @@ const setupSocket = (server) => {
     },
   });
 
-  const users = new Map(); // Map to store userId and socket.id
+  // Map to store userId and socket.id (for persistent connection)
+  const users = new Map(); 
 
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
@@ -72,6 +73,20 @@ const setupSocket = (server) => {
       }
     });
   });
+
+  // Function to send notification to a specific user
+  const sendNotification = (userId, notification) => {
+    const socketId = users.get(userId);
+    if (socketId) {
+      io.to(socketId).emit('notification', notification);
+      console.log(`Notification sent to user ${userId}`);
+      return true;
+    }
+    console.log(`User ${userId} is not connected, notification not sent`);
+    return false;
+  };
+
+  return { io, sendNotification };
 };
 
 module.exports = setupSocket;
