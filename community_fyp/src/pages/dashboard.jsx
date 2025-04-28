@@ -13,30 +13,50 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        // First check if we have userData stored in session
+        const sessionUserData = sessionStorage.getItem('userData');
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+        
         if (!token) {
           navigate('/login');
           return;
         }
+        
+        let user;
+        
+        if (sessionUserData) {
+          user = JSON.parse(sessionUserData);
+          console.log('Using cached user data:', user);
+        } else {
+          const response = await axios.get('http://localhost:5000/api/users/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          user = response.data;
+          // Cache the user data
+          sessionStorage.setItem('userData', JSON.stringify(user));
+          console.log('Fetched fresh user data:', user);
+        }
+        
+        setUserData(user);
 
-        const response = await axios.get('http://localhost:5000/api/users/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        console.log('User Data in Dashboard:', response.data); // Debug the user data
-        setUserData(response.data);
-
-        // If user is admin, redirect to admin dashboard
-        if (response.data.role === 'admin') {
-          console.log('Redirecting to admin dashboard...');
-          navigate('/admin-dashboard');
+        // If user is admin, redirect to admin dashboard ONLY if we're not already
+        // in the process of redirecting (prevent loops)
+        if (user.role === 'admin' && !sessionStorage.getItem('redirecting')) {
+          console.log('User is admin, redirecting to admin dashboard...');
+          sessionStorage.setItem('redirecting', 'true');
+          navigate('/admin/adminDashboard');
           return;
         }
-
-        console.log('Redirecting to dashboard...');
+        
+        // Clear redirection flag once done
+        sessionStorage.removeItem('redirecting');
       } catch (err) {
         console.error('Error fetching user data:', err);
         setError('Failed to fetch user data');
+        // Clear tokens on error
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('userData');
+        localStorage.removeItem('token');
         navigate('/login');
       } finally {
         setLoading(false);
@@ -53,7 +73,7 @@ const Dashboard = () => {
           const { latitude, longitude } = position.coords;
 
           try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token') || localStorage.getItem('token');
             await axios.put(
               'http://localhost:5000/api/users/location',
               { latitude, longitude },
@@ -120,7 +140,7 @@ const Dashboard = () => {
         <div className="button-container">
           <button
             className="action-button primary"
-            onClick={() => navigate('/volunteer-opportunities')}
+            onClick={() => navigate('/volunteer')}
           >
             Volunteer Now
           </button>

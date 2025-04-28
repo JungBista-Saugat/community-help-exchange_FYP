@@ -11,7 +11,7 @@ const OfferHelp = () => {
   // Fetch all help requests
   const fetchAllRequests = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/api/help-requests', {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -27,7 +27,7 @@ const OfferHelp = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const token = localStorage.getItem('token');
+          const token = sessionStorage.getItem('token') || localStorage.getItem('token');
           const response = await axios.get(
             `http://localhost:5000/api/help-requests/nearby?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}`,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -48,7 +48,7 @@ const OfferHelp = () => {
   // Handle offering help
   const handleOfferHelp = async (requestId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const response = await axios.post(
         `http://localhost:5000/api/help-requests/${requestId}/offer-help`,
         {},

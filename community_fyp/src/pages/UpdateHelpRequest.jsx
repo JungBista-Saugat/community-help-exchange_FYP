@@ -20,7 +20,7 @@ const UpdateHelpRequest = ({ opportunity, onUpdate }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const response = await axios.put(`http://localhost:5000/api/help-requests/${opportunity._id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`

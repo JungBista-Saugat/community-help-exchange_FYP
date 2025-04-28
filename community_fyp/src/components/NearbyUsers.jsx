@@ -12,7 +12,7 @@ const NearbyUsers = () => {
           const { latitude, longitude } = position.coords;
 
           try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token') || localStorage.getItem('token');
             const response = await axios.get(
               `http://localhost:5000/api/users/nearby?latitude=${latitude}&longitude=${longitude}&maxDistance=5000`,
               { headers: { Authorization: `Bearer ${token}` } }

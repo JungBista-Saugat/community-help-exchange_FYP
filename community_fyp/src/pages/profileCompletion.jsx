@@ -19,7 +19,7 @@ const ProfileCompletion = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         if (!token) {
           navigate('/login');
           return;
@@ -72,7 +72,7 @@ const ProfileCompletion = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const response = await axios.put(
         'http://localhost:5000/api/users/profile',
         {

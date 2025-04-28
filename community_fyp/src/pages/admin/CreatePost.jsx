@@ -30,7 +30,7 @@ const CreatePost = () => {
     setFormError('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const requiredSkills = formData.requiredSkills
         ? formData.requiredSkills.split(',').map(skill => skill.trim())
         : [];

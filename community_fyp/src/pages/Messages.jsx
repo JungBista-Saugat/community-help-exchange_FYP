@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import axios from 'axios';
 import '../styles/Messages.css';
 import Layout from '../components/Layout';
 
@@ -10,14 +11,30 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [loggedInUserId, setLoggedInUserId] = useState(null); // Fetch the actual user ID
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
+  // Fetch logged in user
   useEffect(() => {
     const fetchLoggedInUser = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         if (!token) {
           throw new Error('No authentication token found');
+        }
+
+        // First check if user data is in sessionStorage
+        const sessionUserData = sessionStorage.getItem('userData');
+        if (sessionUserData) {
+          const userData = JSON.parse(sessionUserData);
+          if (userData._id) {
+            setLoggedInUserId(userData._id);
+            socket.emit('identify', userData._id);
+            return;
+          }
         }
 
         const response = await fetch('http://localhost:5000/api/users/me', {
@@ -35,6 +52,8 @@ const Messages = () => {
           throw new Error('Invalid user data received');
         }
 
+        // Cache the user data
+        sessionStorage.setItem('userData', JSON.stringify(data));
         setLoggedInUserId(data._id);
         socket.emit('identify', data._id);
       } catch (error) {
@@ -46,11 +65,12 @@ const Messages = () => {
     fetchLoggedInUser();
   }, []);
 
+  // Fetch messages for selected user
   useEffect(() => {
     if (selectedUser && loggedInUserId) {
       const fetchMessages = async () => {
         try {
-          const token = localStorage.getItem('token');
+          const token = sessionStorage.getItem('token') || localStorage.getItem('token');
           const response = await fetch(
             `http://localhost:5000/api/messages/conversation/${loggedInUserId}/${selectedUser._id}`,
             {
@@ -81,6 +101,7 @@ const Messages = () => {
     }
   }, [selectedUser, loggedInUserId]);
 
+  // Listen for new messages via socket
   useEffect(() => {
     // Clear existing listeners
     socket.off('newMessage');
@@ -114,10 +135,11 @@ const Messages = () => {
     };
   }, [selectedUser, loggedInUserId]);
 
+  // Fetch all users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/users', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -129,9 +151,10 @@ const Messages = () => {
         }
 
         const data = await response.json();
-        // Filter out admins and the current user
+        // Filter out admins, the current user, and ensure loggedInUserId is defined
         const filteredUsers = data.filter(user => 
-          user.role === 'user' && user._id !== loggedInUserId
+          user.role === 'user' && 
+          user._id !== loggedInUserId
         );
         console.log('Fetched users:', filteredUsers);
         setUsers(filteredUsers);
@@ -141,8 +164,89 @@ const Messages = () => {
       }
     };
 
-    fetchUsers();
-  }, []);
+    // Only fetch users when loggedInUserId is available
+    if (loggedInUserId) {
+      fetchUsers();
+    }
+  }, [loggedInUserId]);
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (loggedInUserId) {
+      fetchUnreadCount();
+      // Set interval to periodically check for new notifications
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [loggedInUserId]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get('http://localhost:5000/api/notifications/unread-count', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUnreadCount(response.data.count);
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('http://localhost:5000/api/notifications', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setNotifications(data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      await fetch(
+        `http://localhost:5000/api/notifications/${notificationId}/read`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // Update local state
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification =>
+          notification._id === notificationId
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+      // Update unread count
+      fetchUnreadCount();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const toggleNotifications = () => {
+    if (!showNotifications && !loading) {
+      fetchNotifications();
+    }
+    setShowNotifications(!showNotifications);
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -151,7 +255,7 @@ const Messages = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }

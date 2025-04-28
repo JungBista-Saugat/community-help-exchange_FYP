@@ -14,7 +14,7 @@ const Volunteering = () => {
   useEffect(() => {
     const fetchOpportunities = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         if (!token) {
           throw new Error('No token found. Please log in.');
         }
@@ -40,7 +40,7 @@ const Volunteering = () => {
   const handleApply = async (opportunityId) => {
     try {
       setApplyingId(opportunityId);
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!token) {
         throw new Error('Please log in to apply');
       }

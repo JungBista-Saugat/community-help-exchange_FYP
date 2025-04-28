@@ -21,11 +21,16 @@ import ManageApplications from './pages/admin/ManageApplication';
 import NearbyUsers from './components/NearbyUsers';
 // Protected Route
 import ProtectedRoute from './components/ProtectedRoute';
+// Session Manager
+import SessionManager from './components/SessionManager';
 
 function App() {
   return (
     <Router>
       <div className="App">
+        {/* Add SessionManager to handle multi-tab sessions */}
+        <SessionManager />
+        
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -33,7 +38,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/profile-completion" element={<ProtectedRoute element={<ProfileCompletion />} />} />
           <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
-          <Route path="/admin/volunteer-opportunities" element={<ProtectedRoute element={<VolunteerOpportunities />} />} />
+          <Route path="/admin/volunteer-opportunities" element={<ProtectedRoute element={<VolunteerOpportunities />} allowedRoles={['admin']} />} />
           <Route path="/messages" element={<ProtectedRoute element={<Messages />} />} />
           <Route path="/ask-help" element={<ProtectedRoute element={<AskHelp />} />} />
           <Route path="/offer-help" element={<ProtectedRoute element={<OfferHelp />} />} />

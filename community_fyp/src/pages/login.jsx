@@ -17,8 +17,11 @@ const Login = () => {
         password,
       });
 
-      // Store the token in localStorage
+      // Store the token in both localStorage and sessionStorage
       localStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('token', response.data.token);
+      // Also store user information in sessionStorage
+      sessionStorage.setItem('userData', JSON.stringify(response.data.user));
 
       const role = response.data.user.role;
       const completedProfile = response.data.user.completedProfile;

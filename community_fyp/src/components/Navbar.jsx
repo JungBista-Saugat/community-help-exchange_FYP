@@ -21,13 +21,26 @@ const Navbar = () => {
 
   const fetchUserData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      // First check sessionStorage for user data
+      const sessionUserData = sessionStorage.getItem('userData');
+      if (sessionUserData) {
+        const userData = JSON.parse(sessionUserData);
+        console.log('Using cached user data in Navbar:', userData);
+        setUserData(userData);
+        return;
+      }
+      
+      // Fall back to API call if no cached data
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!token) return;
 
       const response = await axios.get('http://localhost:5000/api/users/me', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('User data in Navbar:', response.data); // Log for debugging
+      console.log('Fetched user data in Navbar:', response.data);
+      
+      // Cache the user data
+      sessionStorage.setItem('userData', JSON.stringify(response.data));
       setUserData(response.data);
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -36,7 +49,7 @@ const Navbar = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!token) return;
 
       const response = await axios.get('http://localhost:5000/api/notifications/unread-count', {
@@ -51,11 +64,13 @@ const Navbar = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!token) return;
 
       const response = await axios.get('http://localhost:5000/api/notifications', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setNotifications(response.data);
     } catch (error) {
@@ -67,7 +82,7 @@ const Navbar = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       await axios.patch(
         `http://localhost:5000/api/notifications/${notificationId}/read`,
         {},
@@ -147,6 +162,8 @@ const Navbar = () => {
             className="logout-button" 
             onClick={() => {
               localStorage.removeItem('token');
+              sessionStorage.removeItem('token');
+              sessionStorage.removeItem('userData');
               navigate('/login');
             }}
           >

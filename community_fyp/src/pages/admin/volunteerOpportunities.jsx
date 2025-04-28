@@ -17,15 +17,27 @@ const VolunteerOpportunities = () => {
   useEffect(() => {
     const fetchOpportunities = async () => {
       try {
-        const token = localStorage.getItem('token');
-        console.log('Token:', token); // Debug the token
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         if (!token) {
           throw new Error('No token found. Please log in.');
         }
 
+        // Check if user is admin from cached data
+        const sessionUserData = sessionStorage.getItem('userData');
+        if (sessionUserData) {
+          const userData = JSON.parse(sessionUserData);
+          if (userData.role !== 'admin') {
+            console.error('User is not an admin');
+            setError('You do not have admin permissions');
+            setLoading(false);
+            navigate('/dashboard');
+            return;
+          }
+        }
+
         const response = await axios.get('http://localhost:5000/api/admin/volunteer-posts', {
           headers: {
-            Authorization: `Bearer ${token}`, // Ensure the token is sent in the correct format
+            Authorization: `Bearer ${token}`,
           },
         });
         setOpportunities(response.data);
@@ -42,7 +54,7 @@ const VolunteerOpportunities = () => {
 
   const handleUpdate = async (opportunityId, updatedData) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const response = await axios.put(
         `http://localhost:5000/api/help-requests/${opportunityId}`,
         updatedData,
@@ -58,7 +70,7 @@ const VolunteerOpportunities = () => {
 
   const handleDelete = async (opportunityId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       await axios.delete(`http://localhost:5000/api/help-requests/${opportunityId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

@@ -19,7 +19,7 @@ const AskHelp = () => {
       // Get user's location
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const token = localStorage.getItem('token');
+          const token = sessionStorage.getItem('token') || localStorage.getItem('token');
           const requestData = {
             ...formData,
             location: {
